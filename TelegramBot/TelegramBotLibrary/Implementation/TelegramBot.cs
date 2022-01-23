@@ -58,7 +58,7 @@ namespace TelegramBotLibrary.Implementation
             var chatId = update.Message.Chat.Id;
             var messageText = update.Message.Text;
 
-            Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+           // Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
 
             ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(new[]
             {
