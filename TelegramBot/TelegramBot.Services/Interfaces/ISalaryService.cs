@@ -6,7 +6,7 @@ namespace TelegramBot.Services.Interfaces
 {
     public interface ISalaryService
     {
-        double GrossKZT(double USDKZT, int count);
+        double GetGrossKZTRound(double USDKZT, int count);
 
 
     }
