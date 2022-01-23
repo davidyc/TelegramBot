@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RestSharp;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -8,47 +9,49 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
+using TelegramBot.Services.Implementation;
+using TelegramBot.Services.Interfaces;
+using TelegramBot.Services.Model;
 
 namespace TelegramBotLibrary.Implementation
 {
-    public class TelegramBot
+    public class TelegramBots
     {
-        private readonly string token;
-        public TelegramBot(string token)
+        private readonly TelegramBotClient _botClient;
+        private readonly ICurrencyService _currencyService;
+        private readonly ISalaryService _salaryService;
+
+
+        public TelegramBots(string tokenTB, ICurrencyService currencyService, ISalaryService salaryService)
         {
-            this.token = token;
+            _botClient = new TelegramBotClient(tokenTB);
+            _currencyService = currencyService;
+            _salaryService = salaryService;
         }
 
         public async void Run()
         {
-            var botClient = new TelegramBotClient(token);
-
             using var cts = new CancellationTokenSource();
-
-            // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
             var receiverOptions = new ReceiverOptions
             {
                 AllowedUpdates = { } // receive all update types
             };
-            botClient.StartReceiving(
+
+            _botClient.StartReceiving(
                 HandleUpdateAsync,
                 HandleErrorAsync,
                 receiverOptions,
-                cancellationToken: cts.Token);
-
-        
-            Console.ReadLine();
-
-            // Send cancellation request to stop bot
+                cancellationToken: cts.Token);        
+            Console.ReadLine();          
             cts.Cancel();
         }
 
         async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            // Only process Message updates: https://core.telegram.org/bots/api#message
             if (update.Type != UpdateType.Message)
                 return;
-            // Only process text messages
+      
             if (update.Message!.Type != MessageType.Text)
                 return;
 
@@ -57,12 +60,23 @@ namespace TelegramBotLibrary.Implementation
 
             Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
 
+            ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(new[]
+            {
+                new KeyboardButton[] { "Курс и ЗП", "Two" },
+                new KeyboardButton[] { "Three", "Four" },
+            })
+            {
+                ResizeKeyboard = true
+            };
 
-            // Echo received message text
+            var curKZT = await GetCurrncyKTZ(DateTime.Now);
+            var kzt = _salaryService.GrossKZT(curKZT.Quotes.USDKZT, 1070);
+
             Message sentMessage = await botClient.SendTextMessageAsync(
                 chatId: chatId,
-                text: "You said:\n" + messageText,
-                cancellationToken: cancellationToken);
+                text: kzt.ToString(),
+                cancellationToken: cancellationToken,
+                 replyMarkup: replyKeyboardMarkup);
         }
 
         Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -76,6 +90,11 @@ namespace TelegramBotLibrary.Implementation
 
             Console.WriteLine(ErrorMessage);
             return Task.CompletedTask;
+        }
+
+        async Task<KTZCurrencyModel> GetCurrncyKTZ(DateTime date)
+        {           
+            return await _currencyService.GetKZTBYDate(date);
         }
 
 

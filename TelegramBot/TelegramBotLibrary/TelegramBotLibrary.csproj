@@ -5,8 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="RestSharp" Version="107.1.1" />
     <PackageReference Include="SB.TelegramBot" Version="1.0.72" />
+    <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
     <PackageReference Include="Telegram.Bot.Extensions.Polling" Version="1.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TelegramBot.Services\TelegramBot.Services.csproj" />
   </ItemGroup>
 
 </Project>
