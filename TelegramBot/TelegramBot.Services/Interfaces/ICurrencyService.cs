@@ -9,5 +9,6 @@ namespace TelegramBot.Services.Interfaces
     public interface ICurrencyService
     {
         Task<KTZCurrencyModel> GetKZTBYDate(DateTime dateTime);
+        Task<KTZCurrencyModel> GetKZTBYLive();
     }
 }

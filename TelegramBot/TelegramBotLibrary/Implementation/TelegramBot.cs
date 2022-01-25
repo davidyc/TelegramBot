@@ -70,6 +70,7 @@ namespace TelegramBotLibrary.Implementation
             };
 
             var curKZT = await GetCurrncyKTZ(DateTime.Now);
+            var curLiveKZT = await _currencyService.GetKZTBYLive();
             var kzt = _salaryService.GetGrossKZTRound(curKZT.Quotes.USDKZT, 1070);
 
             Message sentMessage = await botClient.SendTextMessageAsync(

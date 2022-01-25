@@ -14,6 +14,7 @@ namespace TelegramBot.Services.Implementation
         private readonly string _token;
 
         private const string HISTORICAL_API = "historical";
+        private const string LIVE_API = "live";
 
 
         public CurrencyService(string serviceURL, string token)
@@ -29,5 +30,13 @@ namespace TelegramBot.Services.Implementation
                 .AddQueryParameter("date",  dateTime.ToString("yyyy-MM-dd"));
             return await _client.GetAsync<KTZCurrencyModel>(request);           
         }
+
+        public async Task<KTZCurrencyModel> GetKZTBYLive()
+        {
+            var request = new RestRequest(LIVE_API, Method.Get)
+                .AddQueryParameter("access_key", _token);               
+            return await _client.GetAsync<KTZCurrencyModel>(request);
+        }
+
     }
 }
