@@ -30,35 +30,20 @@ namespace TelegramBotLibrary.Implementation
             _salaryService = salaryService;
         }
 
-        public async void Run()
-        {
-            using var cts = new CancellationTokenSource();
-            var receiverOptions = new ReceiverOptions
-            {
-                AllowedUpdates = { } // receive all update types
-            };
 
-            _botClient.StartReceiving(
-                HandleUpdateAsync,
-                HandleErrorAsync,
-                receiverOptions,
-                cancellationToken: cts.Token);        
-            Console.ReadLine();          
-            cts.Cancel();
-        }
 
         async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             if (update.Type != UpdateType.Message)
                 return;
-      
+
             if (update.Message!.Type != MessageType.Text)
                 return;
 
             var chatId = update.Message.Chat.Id;
             var messageText = update.Message.Text;
 
-           // Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+            // Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
 
             ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(new[]
             {
@@ -69,13 +54,14 @@ namespace TelegramBotLibrary.Implementation
                 ResizeKeyboard = true
             };
 
-            var curKZT = await GetCurrncyKTZ(DateTime.Now);
-            var curLiveKZT = await _currencyService.GetKZTBYLive();
+            var date = GetLastDayOfMonth(DateTime.Now.AddMonths(-1));
+            var curKZT = await GetCurrncyKTZ(date);
             var kzt = _salaryService.GetGrossKZTRound(curKZT.Quotes.USDKZT, 1070);
+            var message = CreateCurrenyMessage(curKZT.Quotes.USDKZT, kzt, date);
 
             Message sentMessage = await botClient.SendTextMessageAsync(
                 chatId: chatId,
-                text: kzt.ToString(),
+                text: message,
                 cancellationToken: cancellationToken,
                  replyMarkup: replyKeyboardMarkup);
         }
@@ -93,9 +79,36 @@ namespace TelegramBotLibrary.Implementation
             return Task.CompletedTask;
         }
 
-        async Task<KTZCurrencyModel> GetCurrncyKTZ(DateTime date)
+        public DateTime GetLastDayOfMonth(DateTime dateTime)
+        {
+            return new DateTime(dateTime.Year, dateTime.Month, DateTime.DaysInMonth(dateTime.Year, dateTime.Month));
+        }
+
+        public string CreateCurrenyMessage(double cur, double sum, DateTime date)
+        {
+            return $"Курс {cur} на {date.ToShortDateString()} Сумма {sum}";
+        }
+
+        public async Task<KTZCurrencyModel> GetCurrncyKTZ(DateTime date)
         {           
             return await _currencyService.GetKZTBYDate(date);
+        }
+
+        public async Task Run()
+        {
+            using var cts = new CancellationTokenSource();
+            var receiverOptions = new ReceiverOptions
+            {
+                AllowedUpdates = { } // receive all update types
+            };
+
+            _botClient.StartReceiving(
+                HandleUpdateAsync,
+                HandleErrorAsync,
+                receiverOptions,
+                cancellationToken: cts.Token);
+            Console.ReadLine();
+            cts.Cancel();
         }
 
 
